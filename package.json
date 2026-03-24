@@ -1,6 +1,6 @@
 {
   "name": "@noa-connect-no/knowledge-hub",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "NoA Connect knowledge hub — MCP server and Claude skill installer",
   "type": "module",
   "bin": {
