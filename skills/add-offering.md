@@ -1,8 +1,8 @@
 # add-offering
 
-You are helping a NoA Connect colleague add a new offering to the internal knowledge hub.
+You are helping a NoA Connect colleague contribute knowledge to the internal knowledge hub.
 
-Your goal is to produce a complete, well-structured set of markdown files that match the established style of existing offerings, then commit them to the GitHub repo via the `noa-knowledge-mcp` MCP server.
+Your goal is to determine whether their material belongs under an existing offering or warrants a brand new one, then produce well-structured markdown files and commit them via the `noa-knowledge-mcp` MCP server.
 
 ---
 
@@ -10,7 +10,7 @@ Your goal is to produce a complete, well-structured set of markdown files that m
 
 Call `list_disciplines` to show the available areas, then ask:
 
-> **Which discipline does this offering belong to?**
+> **Which discipline does this material belong to?**
 >
 > - `analytics` — Analytics (data collection, attribution, measurement)
 > - `some` — Social Media / SoMe (strategy, execution, community management)
@@ -22,30 +22,50 @@ Wait for the user to confirm before proceeding.
 
 ---
 
-## Step 2 — Gather context
+## Step 2 — Gather the material
 
-1. Call `list_offerings` for the chosen discipline to see what already exists.
-2. For **analytics** offerings: call `read_offering_file` on `attribution/README.md` — this is the reference for tone and structure.
-   For **other disciplines**: call `read_offering_file` on any existing offering's README if one exists, otherwise note that this will be the first offering in this discipline.
-3. Ask: **"What offering do you want to add? Please share any relevant materials — slide decks, notes, existing documentation, or a description of the solution."**
+Ask: **"What do you want to add? Please share any relevant materials — slide decks, notes, existing documentation, or a description of the solution."**
 
 Accept any format: pasted text, file paths, uploaded documents, or a verbal description.
 
 ---
 
-## Step 3 — Determine the offering key
+## Step 3 — Assess: new offering or addition to existing?
 
-Derive a kebab-case folder name, e.g.:
-- "Technical SEO Audit" → `technical-seo-audit`
-- "Meta Ads Strategy" → `meta-ads-strategy`
+1. Call `list_offerings` for the chosen discipline to see what already exists.
+2. Read the existing offerings and compare them against what the user has provided.
+3. Make a judgment:
 
-Confirm with the user: **"I'll create this offering under `{discipline}/{key}`. Does that look right?"**
+**Scenario A — The material clearly extends an existing offering:**
+The content covers the same core topic but adds a new angle, sub-topic, or document type not yet present (e.g. a new `methodology.md` for an offering that only has a README).
+
+→ Present your reasoning:
+> "This looks like it belongs under the existing **{Offering Title}** offering (`{discipline}/{key}/`), as a new file called `{filename}.md`. It covers {brief reason}."
+>
+> "Does that sound right, or do you think this should be a separate offering?"
+
+Wait for confirmation before proceeding to Step 4B.
+
+**Scenario B — The material is a genuinely new offering:**
+The content covers a distinct practice, methodology, or solution that does not overlap significantly with any existing offering.
+
+→ Present your reasoning:
+> "This looks like a new offering. Nothing in the **{Discipline}** section covers {brief reason}."
+>
+> "I'll create it as a new offering. Does that sound right?"
+
+Wait for confirmation before proceeding to Step 4A.
+
+**When in doubt:** Lean toward extending an existing offering rather than creating a new one. Only propose a new offering if the topic is clearly distinct.
 
 ---
 
-## Step 4 — Generate the files
+## Step 4A — New offering: generate all files
 
 Generate ALL required files. Do not commit anything yet.
+
+First, derive a kebab-case folder name and confirm:
+> "I'll create this under `{discipline}/{key}/`. Does that look right?"
 
 ### Required files (non-negotiable)
 
@@ -105,9 +125,7 @@ Card metadata for the website homepage. Must be valid JSON:
 
 ### Supporting files (at least one required)
 
-Generate as many as the source material supports, named in kebab-case.
-
-Common patterns from existing offerings:
+Generate as many as the source material supports, named in kebab-case:
 - `methodology.md` — how the solution works technically
 - `client-onboarding.md` — prerequisites and project setup steps
 - `reporting-framework.md` — what gets measured and how it's surfaced
@@ -123,29 +141,37 @@ Each supporting file must:
 
 ---
 
+## Step 4B — Existing offering: generate the new file(s)
+
+1. Call `read_offering_file` on the existing offering's `README.md` to understand its style and what files already exist.
+2. Generate only the new file(s) the material warrants. Do not regenerate existing files.
+3. Check whether the new file should be referenced in the existing `README.md`'s **Further Reading** section. If yes, generate an updated version of `README.md` with the link added.
+
+Each new file must follow the same style rules as Step 4A supporting files.
+
+---
+
 ## Step 5 — Validate before committing
 
 | Check | Required |
 |---|---|
 | Discipline confirmed by user | Yes |
-| `README.md` has all 7 required sections | Yes |
-| `card.json` is valid JSON with `description` and `chips` | Yes |
-| `description` is ≤ 200 characters | Yes |
-| At least one supporting `.md` file exists | Yes |
-| Folder key is kebab-case and does not already exist in the discipline | Yes |
-| Writing style is professional, direct, and consistent with existing offerings | Yes |
-| "Further Reading" in README links to all generated supporting files | Yes |
+| New vs existing decision confirmed by user | Yes |
+| **New offering:** `README.md` has all 7 required sections | Yes |
+| **New offering:** `card.json` is valid JSON with `description` ≤ 200 chars | Yes |
+| **New offering:** at least one supporting `.md` file exists | Yes |
+| **New offering:** folder key is kebab-case and does not already exist | Yes |
+| **Existing offering:** new file does not duplicate an existing file | Yes |
+| Writing style is professional, direct, consistent with existing offerings | Yes |
+| "Further Reading" links are correct and complete | Yes |
 
-**If any check fails:**
-- If information is missing: ask the user a specific question.
-- After two failed attempts to gather the missing information: stop and explain clearly what is needed. Do NOT commit incomplete work.
+**If any check fails:** ask a specific question. After two failed attempts, stop and explain what is needed. Do NOT commit incomplete work.
 
 ---
 
 ## Step 6 — Show a preview and confirm
 
-Present a summary:
-
+**For a new offering:**
 ```
 Ready to create the following offering:
 
@@ -160,19 +186,39 @@ Files:
 Shall I commit this to the repo?
 ```
 
+**For an addition to an existing offering:**
+```
+Ready to add to the existing {Offering Title} offering:
+
+Folder: noa-connect/{discipline}/{key}/
+New files:
+  - {filename}.md
+Updated files:
+  - README.md  (added link in Further Reading)
+
+Shall I commit this to the repo?
+```
+
 Only proceed after the user confirms.
 
 ---
 
 ## Step 7 — Commit via MCP
 
-Call `create_offering` with:
+**New offering:** Call `create_offering` with:
 - `discipline`: the confirmed discipline key
 - `offering_key`: the confirmed folder name
 - `files`: all generated files with full content
 - `commit_message`: `"Add {Offering Title} offering"`
 
-If `create_offering` returns an error, report it clearly and do not retry without addressing the root cause.
+**Addition to existing offering:** Call `update_file` once per file (new files and any updated files like README.md):
+- `discipline`: the discipline key
+- `offering_key`: the existing offering folder name
+- `file_path`: the filename (e.g. `methodology.md`)
+- `content`: the full file content
+- `commit_message`: `"Add {filename} to {Offering Title}"`
+
+If any MCP call returns an error, report it clearly and do not retry without addressing the root cause.
 
 ---
 
@@ -180,6 +226,4 @@ If `create_offering` returns an error, report it clearly and do not retry withou
 
 After a successful commit:
 
-> The offering **{Offering Title}** has been added to the **{Discipline}** section of the repo. It will appear on the knowledge hub website automatically on the next Vercel build — no code changes needed.
->
-> To update any file later, use `/update-doc`.
+> ✓ Done. The changes have been committed to the repo and will appear on the knowledge hub website automatically on the next Vercel build — no code changes needed.
