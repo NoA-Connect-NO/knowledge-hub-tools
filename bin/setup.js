@@ -93,7 +93,7 @@ if (!existsSync(skillsDir)) mkdirSync(skillsDir, { recursive: true });
 
 copyFileSync(
   join(PACKAGE_ROOT, 'skills', 'add-offering.md'),
-  join(skillsDir, 'add-offering.md')
+  join(skillsDir, 'SKILL.md')
 );
 console.log('✓ Skill installed');
 
