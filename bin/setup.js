@@ -88,7 +88,7 @@ try {
 
 // Install skill
 console.log('→ Installing /add-offering skill...');
-const skillsDir = join(homedir(), '.claude', 'skills');
+const skillsDir = join(homedir(), '.claude', 'skills', 'add-offering');
 if (!existsSync(skillsDir)) mkdirSync(skillsDir, { recursive: true });
 
 copyFileSync(
