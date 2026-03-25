@@ -32,8 +32,7 @@ const DISCIPLINE_LABELS = {
   media:     'Media',
 };
 
-const disciplineSchema = z.enum(['analytics', 'some', 'sem', 'seo', 'media'])
-  .describe('Discipline area: analytics, some, sem, seo, or media');
+const disciplineSchema = z.enum(['analytics', 'some', 'sem', 'seo', 'media']);
 
 function githubHeaders() {
   const token = process.env.GITHUB_TOKEN;
@@ -89,10 +88,11 @@ const server = new McpServer({
 
 // ─── Tool: list_disciplines ──────────────────────────────────────────────────
 
-server.tool(
+server.registerTool(
   'list_disciplines',
-  'List all available discipline areas in the knowledge hub.',
-  z.object({}),
+  {
+    description: 'List all available discipline areas in the knowledge hub.',
+  },
   async () => {
     const list = Object.entries(DISCIPLINE_LABELS).map(
       ([key, label]) => `${key} — ${label}`
@@ -103,12 +103,14 @@ server.tool(
 
 // ─── Tool: list_offerings ────────────────────────────────────────────────────
 
-server.tool(
+server.registerTool(
   'list_offerings',
-  'List all current offering folders within a discipline.',
-  z.object({
-    discipline: disciplineSchema,
-  }),
+  {
+    description: 'List all current offering folders within a discipline.',
+    inputSchema: {
+      discipline: disciplineSchema,
+    },
+  },
   async ({ discipline }) => {
     const basePath = DISCIPLINES[discipline];
     const entries = await githubGet(basePath);
@@ -117,16 +119,37 @@ server.tool(
   }
 );
 
+// ─── Tool: list_offering_files ───────────────────────────────────────────────
+
+server.registerTool(
+  'list_offering_files',
+  {
+    description: 'List all files in an existing offering folder.',
+    inputSchema: {
+      discipline: disciplineSchema,
+      offering: z.string().check(z.minLength(1)),
+    },
+  },
+  async ({ discipline, offering }) => {
+    const basePath = `${DISCIPLINES[discipline]}/${offering}`;
+    const entries = await githubGet(basePath);
+    const files = entries.filter((e) => e.type === 'file').map((e) => e.name);
+    return { content: [{ type: 'text', text: JSON.stringify(files, null, 2) }] };
+  }
+);
+
 // ─── Tool: read_offering_file ────────────────────────────────────────────────
 
-server.tool(
+server.registerTool(
   'read_offering_file',
-  'Read a specific file from an offering folder. Use this to understand existing structure and style before creating a new offering.',
-  z.object({
-    discipline: disciplineSchema,
-    offering: z.string().describe('Offering folder name, e.g. "attribution"'),
-    file: z.string().describe('File path relative to the offering folder, e.g. "README.md"'),
-  }),
+  {
+    description: 'Read a specific file from an offering folder. Use this to understand existing structure and style.',
+    inputSchema: {
+      discipline: disciplineSchema,
+      offering: z.string().check(z.minLength(1)),
+      file: z.string().check(z.minLength(1)),
+    },
+  },
   async ({ discipline, offering, file }) => {
     const path = `${DISCIPLINES[discipline]}/${offering}/${file}`;
     const data = await githubGet(path);
@@ -134,37 +157,22 @@ server.tool(
   }
 );
 
-// ─── Tool: get_file_sha ──────────────────────────────────────────────────────
-
-server.tool(
-  'get_file_sha',
-  'Get the current SHA of a file (required before updating an existing file).',
-  z.object({
-    discipline: disciplineSchema,
-    offering: z.string().describe('Offering folder name'),
-    file: z.string().describe('File path relative to the offering folder'),
-  }),
-  async ({ discipline, offering, file }) => {
-    const path = `${DISCIPLINES[discipline]}/${offering}/${file}`;
-    const data = await githubGet(path);
-    return { content: [{ type: 'text', text: data.sha }] };
-  }
-);
-
 // ─── Tool: create_offering ───────────────────────────────────────────────────
 
-server.tool(
+server.registerTool(
   'create_offering',
-  'Create a new offering in the knowledge hub under a specific discipline. Required files: README.md, card.json (with description and chips), and at least one supporting .md file.',
-  z.object({
-    discipline: disciplineSchema,
-    offering_key: z.string().describe('Folder name, kebab-case, e.g. "technical-seo"'),
-    files: z.array(z.object({
-      path: z.string().describe('File path relative to the offering folder, e.g. "README.md"'),
-      content: z.string().describe('Full file content'),
-    })).describe('All files to create for this offering'),
-    commit_message: z.string().describe('Git commit message'),
-  }),
+  {
+    description: 'Create a new offering in the knowledge hub. Required files: README.md, card.json (with description and chips), and at least one supporting .md file.',
+    inputSchema: {
+      discipline: disciplineSchema,
+      offering_key: z.string().check(z.minLength(1)),
+      files: z.array(z.object({
+        path: z.string().check(z.minLength(1)),
+        content: z.string(),
+      })),
+      commit_message: z.string().check(z.minLength(1)),
+    },
+  },
   async ({ discipline, offering_key, files, commit_message }) => {
     const paths = files.map((f) => f.path);
     const missing = [];
@@ -217,35 +225,20 @@ server.tool(
   }
 );
 
-// ─── Tool: list_offering_files ───────────────────────────────────────────────
-
-server.tool(
-  'list_offering_files',
-  'List all files in an existing offering folder, including subdirectories.',
-  z.object({
-    discipline: disciplineSchema,
-    offering: z.string().describe('Offering folder name, e.g. "attribution"'),
-  }),
-  async ({ discipline, offering }) => {
-    const basePath = `${DISCIPLINES[discipline]}/${offering}`;
-    const entries = await githubGet(basePath);
-    const files = entries.filter((e) => e.type === 'file').map((e) => e.name);
-    return { content: [{ type: 'text', text: JSON.stringify(files, null, 2) }] };
-  }
-);
-
 // ─── Tool: update_file ───────────────────────────────────────────────────────
 
-server.tool(
+server.registerTool(
   'update_file',
-  'Update an existing file in an offering. Automatically fetches the current SHA before writing.',
-  z.object({
-    discipline: disciplineSchema,
-    offering: z.string().describe('Offering folder name'),
-    file: z.string().describe('File path relative to the offering folder'),
-    content: z.string().describe('New full file content'),
-    commit_message: z.string().describe('Git commit message'),
-  }),
+  {
+    description: 'Update an existing file in an offering. Automatically fetches the current SHA before writing.',
+    inputSchema: {
+      discipline: disciplineSchema,
+      offering: z.string().check(z.minLength(1)),
+      file: z.string().check(z.minLength(1)),
+      content: z.string(),
+      commit_message: z.string().check(z.minLength(1)),
+    },
+  },
   async ({ discipline, offering, file, content, commit_message }) => {
     const repoPath = `${DISCIPLINES[discipline]}/${offering}/${file}`;
     const existing = await githubGet(repoPath);
@@ -256,16 +249,18 @@ server.tool(
 
 // ─── Tool: create_file ───────────────────────────────────────────────────────
 
-server.tool(
+server.registerTool(
   'create_file',
-  'Add a new file to an existing offering. Use this when adding content that does not yet exist in the offering.',
-  z.object({
-    discipline: disciplineSchema,
-    offering: z.string().describe('Offering folder name'),
-    file: z.string().describe('File path relative to the offering folder, e.g. "methodology.md"'),
-    content: z.string().describe('Full file content'),
-    commit_message: z.string().describe('Git commit message'),
-  }),
+  {
+    description: 'Add a new file to an existing offering. Use this when adding content that does not yet exist in the offering.',
+    inputSchema: {
+      discipline: disciplineSchema,
+      offering: z.string().check(z.minLength(1)),
+      file: z.string().check(z.minLength(1)),
+      content: z.string(),
+      commit_message: z.string().check(z.minLength(1)),
+    },
+  },
   async ({ discipline, offering, file, content, commit_message }) => {
     const repoPath = `${DISCIPLINES[discipline]}/${offering}/${file}`;
     await githubPut(repoPath, commit_message, b64encode(content), undefined);
