@@ -11,10 +11,6 @@ const PACKAGE_ROOT = join(__dirname, '..');
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 
-function ask(question) {
-  return new Promise((resolve) => rl.question(question, resolve));
-}
-
 function askSecret(question) {
   return new Promise((resolve) => {
     process.stdout.write(question);
@@ -86,16 +82,18 @@ try {
   }
 }
 
-// Install skill
-console.log('→ Installing /add-offering skill...');
-const skillsDir = join(homedir(), '.claude', 'skills', 'add-offering');
-if (!existsSync(skillsDir)) mkdirSync(skillsDir, { recursive: true });
-
-copyFileSync(
-  join(PACKAGE_ROOT, 'skills', 'add-offering.md'),
-  join(skillsDir, 'SKILL.md')
-);
-console.log('✓ Skill installed');
+// Install skills
+const skillsToInstall = ['add-offering', 'update-offering'];
+for (const skill of skillsToInstall) {
+  console.log(`→ Installing /${skill} skill...`);
+  const skillsDir = join(homedir(), '.claude', 'skills', skill);
+  if (!existsSync(skillsDir)) mkdirSync(skillsDir, { recursive: true });
+  copyFileSync(
+    join(PACKAGE_ROOT, 'skills', `${skill}.md`),
+    join(skillsDir, 'SKILL.md')
+  );
+  console.log(`✓ /${skill} installed`);
+}
 
 rl.close();
 
