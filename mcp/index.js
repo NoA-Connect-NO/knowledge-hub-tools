@@ -10,7 +10,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { z } from 'zod';
+import { z } from 'zod/v4-mini';
 
 const OWNER = 'NoA-Connect-NO';
 const REPO = 'NoA-Connect-Knowldege';
