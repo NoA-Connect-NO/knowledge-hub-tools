@@ -217,23 +217,59 @@ server.tool(
   }
 );
 
+// ─── Tool: list_offering_files ───────────────────────────────────────────────
+
+server.tool(
+  'list_offering_files',
+  'List all files in an existing offering folder, including subdirectories.',
+  z.object({
+    discipline: disciplineSchema,
+    offering: z.string().describe('Offering folder name, e.g. "attribution"'),
+  }),
+  async ({ discipline, offering }) => {
+    const basePath = `${DISCIPLINES[discipline]}/${offering}`;
+    const entries = await githubGet(basePath);
+    const files = entries.filter((e) => e.type === 'file').map((e) => e.name);
+    return { content: [{ type: 'text', text: JSON.stringify(files, null, 2) }] };
+  }
+);
+
 // ─── Tool: update_file ───────────────────────────────────────────────────────
 
 server.tool(
   'update_file',
-  'Update a single existing file in an offering. Requires the current SHA (use get_file_sha first).',
+  'Update an existing file in an offering. Automatically fetches the current SHA before writing.',
   z.object({
     discipline: disciplineSchema,
     offering: z.string().describe('Offering folder name'),
     file: z.string().describe('File path relative to the offering folder'),
     content: z.string().describe('New full file content'),
-    sha: z.string().describe('Current SHA of the file (from get_file_sha)'),
     commit_message: z.string().describe('Git commit message'),
   }),
-  async ({ discipline, offering, file, content, sha, commit_message }) => {
-    const path = `${DISCIPLINES[discipline]}/${offering}/${file}`;
-    await githubPut(path, commit_message, b64encode(content), sha);
-    return { content: [{ type: 'text', text: `Updated ${path} successfully.` }] };
+  async ({ discipline, offering, file, content, commit_message }) => {
+    const repoPath = `${DISCIPLINES[discipline]}/${offering}/${file}`;
+    const existing = await githubGet(repoPath);
+    await githubPut(repoPath, commit_message, b64encode(content), existing.sha);
+    return { content: [{ type: 'text', text: `Updated ${repoPath} successfully.` }] };
+  }
+);
+
+// ─── Tool: create_file ───────────────────────────────────────────────────────
+
+server.tool(
+  'create_file',
+  'Add a new file to an existing offering. Use this when adding content that does not yet exist in the offering.',
+  z.object({
+    discipline: disciplineSchema,
+    offering: z.string().describe('Offering folder name'),
+    file: z.string().describe('File path relative to the offering folder, e.g. "methodology.md"'),
+    content: z.string().describe('Full file content'),
+    commit_message: z.string().describe('Git commit message'),
+  }),
+  async ({ discipline, offering, file, content, commit_message }) => {
+    const repoPath = `${DISCIPLINES[discipline]}/${offering}/${file}`;
+    await githubPut(repoPath, commit_message, b64encode(content), undefined);
+    return { content: [{ type: 'text', text: `Created ${repoPath} successfully.` }] };
   }
 );
 
