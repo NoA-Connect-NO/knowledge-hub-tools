@@ -1,6 +1,6 @@
 {
   "name": "@noa-connect-no/knowledge-hub",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "NoA Connect knowledge hub — MCP server and Claude skill installer",
   "type": "module",
   "bin": {
@@ -19,6 +19,7 @@
     "url": "https://github.com/NoA-Connect-NO/knowledge-hub-tools.git"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.0.0"
   }
 }

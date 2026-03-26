@@ -10,7 +10,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { z } from 'zod/v4-mini';
+import { z } from 'zod';
 
 const OWNER = 'NoA-Connect-NO';
 const REPO = 'NoA-Connect-Knowldege';
@@ -127,7 +127,7 @@ server.registerTool(
     description: 'List all files in an existing offering folder.',
     inputSchema: {
       discipline: disciplineSchema,
-      offering: z.string().check(z.minLength(1)),
+      offering: z.string().min(1),
     },
   },
   async ({ discipline, offering }) => {
@@ -146,8 +146,8 @@ server.registerTool(
     description: 'Read a specific file from an offering folder. Use this to understand existing structure and style.',
     inputSchema: {
       discipline: disciplineSchema,
-      offering: z.string().check(z.minLength(1)),
-      file: z.string().check(z.minLength(1)),
+      offering: z.string().min(1),
+      file: z.string().min(1),
     },
   },
   async ({ discipline, offering, file }) => {
@@ -165,12 +165,12 @@ server.registerTool(
     description: 'Create a new offering in the knowledge hub. Required files: README.md, card.json (with description and chips), and at least one supporting .md file.',
     inputSchema: {
       discipline: disciplineSchema,
-      offering_key: z.string().check(z.minLength(1)),
+      offering_key: z.string().min(1),
       files: z.array(z.object({
-        path: z.string().check(z.minLength(1)),
+        path: z.string().min(1),
         content: z.string(),
       })),
-      commit_message: z.string().check(z.minLength(1)),
+      commit_message: z.string().min(1),
     },
   },
   async ({ discipline, offering_key, files, commit_message }) => {
@@ -233,10 +233,10 @@ server.registerTool(
     description: 'Update an existing file in an offering. Automatically fetches the current SHA before writing.',
     inputSchema: {
       discipline: disciplineSchema,
-      offering: z.string().check(z.minLength(1)),
-      file: z.string().check(z.minLength(1)),
+      offering: z.string().min(1),
+      file: z.string().min(1),
       content: z.string(),
-      commit_message: z.string().check(z.minLength(1)),
+      commit_message: z.string().min(1),
     },
   },
   async ({ discipline, offering, file, content, commit_message }) => {
@@ -255,10 +255,10 @@ server.registerTool(
     description: 'Add a new file to an existing offering. Use this when adding content that does not yet exist in the offering.',
     inputSchema: {
       discipline: disciplineSchema,
-      offering: z.string().check(z.minLength(1)),
-      file: z.string().check(z.minLength(1)),
+      offering: z.string().min(1),
+      file: z.string().min(1),
       content: z.string(),
-      commit_message: z.string().check(z.minLength(1)),
+      commit_message: z.string().min(1),
     },
   },
   async ({ discipline, offering, file, content, commit_message }) => {
